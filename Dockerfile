@@ -21,6 +21,9 @@ WORKDIR /app
 # Install uv for faster pip installs
 RUN pip install uv
 
+# Install CPU-only PyTorch first to reduce image size (avoiding CUDA bloat)
+RUN uv pip install --system torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
 # Copy requirements and install dependencies
 COPY requirements.txt .
 # Use uv to install dependencies (much faster than pip)
