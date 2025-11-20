@@ -18,9 +18,14 @@ RUN apt-get update && apt-get install -y \
 # Set work directory
 WORKDIR /app
 
+# Install uv for faster pip installs
+RUN pip install uv
+
 # Copy requirements and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Use uv to install dependencies (much faster than pip)
+# --system installs into the system python environment
+RUN uv pip install --system --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -28,7 +33,9 @@ COPY . .
 # Expose the port
 EXPOSE $PORT
 
+# Healthcheck to ensure the service is running
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:$PORT/health || exit 1
+
 # Command to run LangFlow
-# Using python -m langflow run is a common way, but let's check if we need a specific entry point.
-# The PRD mentions "LangFlow UI loads".
 CMD ["sh", "-c", "python -m langflow run --host $LANGFLOW_HOST --port $PORT"]
